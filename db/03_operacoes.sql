@@ -1,0 +1,67 @@
+-- Operações de estoque (Tasks 3, 4, 4b e 7).
+
+-- Registrar retirada (Task 3).
+-- Retirada pendente (p_pendente = true) é registrada quando o material sai sem poder ser lançado na hora:
+-- ela não reduz o disponível até ser regularizada (Task 4b), e por isso não passa pela trava de saldo.
+CREATE OR REPLACE FUNCTION registrar_retirada(
+  p_item_id                     uuid,
+  p_quantidade                  integer,
+  p_unidade_codigo              text,
+  p_local_uso_id                uuid,
+  p_responsavel                 text,
+  p_confirmar_unidade_diferente boolean DEFAULT false,
+  p_pendente                    boolean DEFAULT false
+)
+RETURNS TABLE (numero text, aviso text)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_saldo      integer;
+  v_unidade_id uuid;
+  v_local      locais_uso%ROWTYPE;
+  v_numero     text;
+  v_aviso      text := NULL;
+BEGIN
+  IF p_quantidade IS NULL OR p_quantidade <= 0 THEN
+    RAISE EXCEPTION 'quantidade deve ser maior que zero';
+  END IF;
+
+  -- Trava a linha do item: duas retiradas concorrentes passam uma de cada vez.
+  PERFORM 1 FROM itens WHERE id = p_item_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'item não encontrado';
+  END IF;
+
+  SELECT s.saldo_disponivel INTO v_saldo FROM saldos_itens s WHERE s.item_id = p_item_id;
+  IF NOT p_pendente AND v_saldo < p_quantidade THEN
+    RAISE EXCEPTION 'saldo insuficiente: disponível %', v_saldo;
+  END IF;
+
+  SELECT u.id INTO v_unidade_id FROM unidades u WHERE u.codigo = p_unidade_codigo;
+  IF v_unidade_id IS NULL THEN
+    RAISE EXCEPTION 'unidade inválida: %', p_unidade_codigo;
+  END IF;
+
+  SELECT * INTO v_local FROM locais_uso l WHERE l.id = p_local_uso_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'local de uso não encontrado';
+  END IF;
+
+  IF v_local.tipo = 'exclusivo' AND v_local.unidade_id <> v_unidade_id THEN
+    IF NOT p_confirmar_unidade_diferente THEN
+      RAISE EXCEPTION 'confirmação necessária: local pertence a outra unidade';
+    END IF;
+    v_aviso := 'local de uso ' || v_local.nome || ' pertence a outra unidade';
+  END IF;
+
+  v_numero := 'RET-' || lpad(nextval('seq_ret')::text, 4, '0');
+
+  INSERT INTO movimentacoes (numero, tipo, item_id, quantidade, unidade_id, local_uso_id, responsavel, status)
+  VALUES (
+    v_numero, 'retirada', p_item_id, p_quantidade, v_unidade_id, p_local_uso_id, p_responsavel,
+    CASE WHEN p_pendente THEN 'pendente' ELSE 'concluida' END
+  );
+
+  RETURN QUERY SELECT v_numero, v_aviso;
+END;
+$$;
