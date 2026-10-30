@@ -45,6 +45,11 @@ CREATE TABLE movimentacoes (
   retirada_origem_id uuid REFERENCES movimentacoes (id),
   condicao           text CHECK (condicao IN ('reuso', 'defeito')),
   status             text NOT NULL DEFAULT 'concluida' CHECK (status IN ('concluida', 'pendente')),
+  -- sinal só importa para 'ajuste': quantidade é sempre a magnitude (> 0), e o
+  -- sinal diz se o ajuste soma (correção para cima) ou subtrai (correção para
+  -- baixo, ex.: contagem física menor que o sistema). Para retirada/devolução
+  -- o sinal fica no valor padrão e não é usado pela view de saldos.
+  sinal              integer NOT NULL DEFAULT 1 CHECK (sinal IN (1, -1)),
   CHECK (tipo <> 'retirada' OR (unidade_id IS NOT NULL AND local_uso_id IS NOT NULL)),
   CHECK (tipo <> 'devolucao' OR (retirada_origem_id IS NOT NULL AND condicao IS NOT NULL))
 );

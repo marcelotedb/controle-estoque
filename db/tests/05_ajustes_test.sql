@@ -88,3 +88,20 @@ BEGIN
     IF SQLERRM NOT LIKE '%já aprovado%' THEN RAISE; END IF;
   END;
 END $$;
+
+-- 5. Ajuste negativo (correção para baixo) subtrai do saldo disponível, não soma.
+-- Lacuna encontrada na Task 12: solicitar_ajuste descartava o sinal com abs().
+DO $$
+DECLARE v_item uuid; v_ajuste_neg uuid; v_disp integer;
+BEGIN
+  SELECT item_id INTO v_item FROM ctx5;
+  PERFORM set_config('app.current_user_id', (SELECT dono::text FROM ctx5), false);
+
+  v_ajuste_neg := solicitar_ajuste(v_item, -3, 'correção de contagem', 'Marcelo');
+  PERFORM aprovar_ajuste(v_ajuste_neg);
+
+  SELECT saldo_disponivel INTO v_disp FROM saldos_itens WHERE item_id = v_item;
+  IF v_disp <> 7 THEN
+    RAISE EXCEPTION 'esperado saldo disponível 7 (10 - 3) após ajuste negativo, obtido %', v_disp;
+  END IF;
+END $$;

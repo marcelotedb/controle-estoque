@@ -15,7 +15,7 @@ WITH agregado AS (
     i.localizacao,
     i.quantidade_minima,
     coalesce(sum(CASE
-      WHEN m.tipo = 'ajuste'    AND m.status = 'concluida' THEN  m.quantidade
+      WHEN m.tipo = 'ajuste'    AND m.status = 'concluida' THEN  m.quantidade * m.sinal
       WHEN m.tipo = 'devolucao' AND m.status = 'concluida' AND m.condicao = 'reuso' THEN  m.quantidade
       WHEN m.tipo = 'retirada'  AND m.status = 'concluida' THEN -m.quantidade
       ELSE 0 END), 0)::integer AS saldo_disponivel,

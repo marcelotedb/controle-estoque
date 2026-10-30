@@ -17,8 +17,8 @@ BEGIN
     RAISE EXCEPTION 'quantidade do ajuste não pode ser zero';
   END IF;
 
-  INSERT INTO movimentacoes (tipo, item_id, quantidade, responsavel, status)
-  VALUES ('ajuste', p_item_id, abs(p_quantidade), p_motivo || ' — solicitado por ' || p_responsavel, 'pendente')
+  INSERT INTO movimentacoes (tipo, item_id, quantidade, sinal, responsavel, status)
+  VALUES ('ajuste', p_item_id, abs(p_quantidade), sign(p_quantidade)::integer, p_motivo || ' — solicitado por ' || p_responsavel, 'pendente')
   RETURNING id INTO v_id;
 
   RETURN v_id;

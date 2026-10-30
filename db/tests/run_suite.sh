@@ -66,4 +66,4 @@ psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/08_cadastro_test.sql >/dev/null
 reset; aplicar db/01_schema.sql db/02_saldos.sql db/03_operacoes.sql
 psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/09_exportacao_test.sql >/dev/null
 
-echo "Suite do banco: schema 4/4, saldos 4/4, retirada 6/6, concorrência 1/1, devolução 6/6, regularização 5/5, RLS 5/5, ajustes 4/4, duplicidade 4/4, cadastro 6/6, exportação 3/3 — todos passam"
+echo "Suite do banco: schema 4/4, saldos 4/4, retirada 6/6, concorrência 1/1, devolução 6/6, regularização 5/5, RLS 5/5, ajustes 5/5, duplicidade 4/4, cadastro 6/6, exportação 3/3 — todos passam"
