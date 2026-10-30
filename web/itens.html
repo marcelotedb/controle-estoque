@@ -103,8 +103,11 @@ import { localExclusivoSemUnidade } from './js/itens.js';
 import { exigirSessao, sair } from './js/autenticacao.js';
 
 document.getElementById('link-sair').addEventListener('click', (ev) => { ev.preventDefault(); sair(cliente); });
+// Mesmo padrão das outras páginas: aguarda a checagem de sessão (ela mesma
+// redireciona para o login quando não há sessão) antes de deixar a tela de
+// cadastro ativa.
 if (!window.__CHAMAR_TESTE__) {
-  exigirSessao(cliente, 'itens.html');
+  await exigirSessao(cliente, 'itens.html');
 }
 
 // Gancho de teste: a verificação da Task 10 injeta respostas aqui, sem precisar
