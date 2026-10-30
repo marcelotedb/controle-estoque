@@ -46,7 +46,9 @@ CREATE POLICY mov_insert       ON movimentacoes FOR INSERT WITH CHECK (tem_perfi
 CREATE POLICY mov_update       ON movimentacoes FOR UPDATE USING (eh_dono());
 -- Sem política de DELETE em movimentacoes: nenhuma movimentação é apagada por ninguém.
 
-CREATE POLICY perfis_select    ON perfis        FOR SELECT USING (usuario_id = auth.uid() OR eh_dono());
+-- auth.uid() entre parênteses com SELECT (achado pelo advisor de performance do
+-- Supabase): sem isso, o Postgres reavalia a função para cada linha em vez de uma vez.
+CREATE POLICY perfis_select    ON perfis        FOR SELECT USING (usuario_id = (select auth.uid()) OR eh_dono());
 
 -- As funções de operação (Tasks 3, 4 e 4b) fazem SELECT ... FOR UPDATE e INSERT em
 -- movimentacoes/itens por conta própria, validando as regras de negócio internamente.

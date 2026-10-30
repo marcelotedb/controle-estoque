@@ -53,3 +53,11 @@ CREATE TABLE movimentacoes (
   CHECK (tipo <> 'retirada' OR (unidade_id IS NOT NULL AND local_uso_id IS NOT NULL)),
   CHECK (tipo <> 'devolucao' OR (retirada_origem_id IS NOT NULL AND condicao IS NOT NULL))
 );
+
+-- Índices de cobertura para as chaves estrangeiras (achado pelo advisor de performance
+-- do Supabase): sem eles, toda busca de movimentações de um item ou local faz full scan.
+CREATE INDEX idx_locais_uso_unidade_id ON locais_uso (unidade_id);
+CREATE INDEX idx_movimentacoes_item_id ON movimentacoes (item_id);
+CREATE INDEX idx_movimentacoes_local_uso_id ON movimentacoes (local_uso_id);
+CREATE INDEX idx_movimentacoes_retirada_origem_id ON movimentacoes (retirada_origem_id);
+CREATE INDEX idx_movimentacoes_unidade_id ON movimentacoes (unidade_id);
