@@ -54,4 +54,8 @@ psql "$DB" -v ON_ERROR_STOP=1 -q -c "DROP SCHEMA IF EXISTS auth CASCADE;" >/dev/
 reset; aplicar db/01_schema.sql db/02_saldos.sql db/03_operacoes.sql db/tests/local_auth_stub.sql db/04_permissoes.sql db/05_ajustes.sql
 psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/05_ajustes_test.sql >/dev/null
 
-echo "Suite do banco: schema 4/4, saldos 4/4, retirada 6/6, concorrência 1/1, devolução 6/6, regularização 5/5, RLS 5/5, ajustes 4/4 — todos passam"
+# Duplicidade: 01, 02 e 03 (normalizar_nome e as duas funções de verificação estão em 03_operacoes.sql).
+reset; aplicar db/01_schema.sql db/02_saldos.sql db/03_operacoes.sql
+psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/07_duplicata_test.sql >/dev/null
+
+echo "Suite do banco: schema 4/4, saldos 4/4, retirada 6/6, concorrência 1/1, devolução 6/6, regularização 5/5, RLS 5/5, ajustes 4/4, duplicidade 4/4 — todos passam"

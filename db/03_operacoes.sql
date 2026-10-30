@@ -159,3 +159,36 @@ BEGIN
   WHERE id = r.id;
 END;
 $$;
+
+-- Verificação de duplicidade (Task 7).
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
+-- Normaliza para comparação: minúsculas, sem acento, espaços colapsados e sem sobra nas pontas.
+CREATE OR REPLACE FUNCTION normalizar_nome(p_nome text) RETURNS text
+LANGUAGE sql IMMUTABLE
+AS $$
+  SELECT trim(regexp_replace(unaccent(lower(p_nome)), '\s+', ' ', 'g'));
+$$;
+
+CREATE OR REPLACE FUNCTION verificar_duplicata_item(p_nome text)
+RETURNS TABLE (item_id uuid, nome text, codigo text)
+LANGUAGE sql STABLE
+AS $$
+  SELECT i.id, i.nome, i.codigo
+  FROM itens i
+  WHERE similarity(normalizar_nome(i.nome), normalizar_nome(p_nome)) > 0.4
+  ORDER BY similarity(normalizar_nome(i.nome), normalizar_nome(p_nome)) DESC
+  LIMIT 5;
+$$;
+
+CREATE OR REPLACE FUNCTION verificar_duplicata_local(p_nome text)
+RETURNS TABLE (local_uso_id uuid, nome text)
+LANGUAGE sql STABLE
+AS $$
+  SELECT l.id, l.nome
+  FROM locais_uso l
+  WHERE similarity(normalizar_nome(l.nome), normalizar_nome(p_nome)) > 0.4
+  ORDER BY similarity(normalizar_nome(l.nome), normalizar_nome(p_nome)) DESC
+  LIMIT 5;
+$$;
