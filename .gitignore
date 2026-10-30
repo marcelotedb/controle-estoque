@@ -1,2 +1,3 @@
 .superpowers/
 .env.test
+node_modules/

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel — Controle de Estoque</title>
+<link rel="stylesheet" href="css/app.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+</head>
+<body>
+<header class="topo">
+  <h1>Controle de Estoque</h1>
+  <nav class="menu">
+    <a href="index.html" class="ativo">Painel</a>
+    <a href="retirada.html">Retirada</a>
+    <a href="devolucao.html">Devolução</a>
+    <a href="itens.html">Itens e locais</a>
+  </nav>
+</header>
+
+<main class="conteudo">
+  <input id="busca" class="busca" type="search" placeholder="Buscar por nome, código ou localização…" autocomplete="off">
+
+  <section id="secao-alertas">
+    <h2 class="titulo-secao alerta">Itens em alerta</h2>
+    <div class="lista" id="lista-alertas"></div>
+  </section>
+
+  <section id="secao-pendentes">
+    <h2 class="titulo-secao">Pendências</h2>
+    <div class="lista" id="lista-pendentes"></div>
+  </section>
+
+  <section id="secao-normais">
+    <h2 class="titulo-secao">Demais itens</h2>
+    <div class="lista" id="lista-normais"></div>
+  </section>
+
+  <p id="mensagem" class="mensagem" hidden></p>
+</main>
+
+<script type="module">
+import { separarSecoes, filtrarLinhas } from './js/painel.js';
+import { cliente } from './js/supabase.js';
+
+function linhaHTML(l) {
+  const local = l.localizacao ? ` · ${l.localizacao}` : '';
+  return `
+    <div class="linha ${l.em_alerta ? 'linha-alerta' : ''}" data-codigo="${l.codigo}">
+      <div class="linha-nome">${l.nome} <span class="codigo">${l.codigo}</span>${local}</div>
+      <div class="linha-saldos">
+        <span title="Disponível">Disp: ${l.saldo_disponivel}</span>
+        <span title="Em uso">Uso: ${l.saldo_em_uso}</span>
+        <span title="Pendente">Pend: ${l.saldo_pendente}</span>
+        <span title="Mínimo">Mín: ${l.quantidade_minima}</span>
+      </div>
+    </div>`;
+}
+
+function renderizar(linhas) {
+  const { alertas, pendentes, normais } = separarSecoes(linhas);
+  document.getElementById('lista-alertas').innerHTML = alertas.map(linhaHTML).join('') || '<p class="vazio">Nenhum item em alerta.</p>';
+  document.getElementById('lista-pendentes').innerHTML = pendentes.map(linhaHTML).join('') || '<p class="vazio">Nenhuma pendência.</p>';
+  document.getElementById('lista-normais').innerHTML = normais.map(linhaHTML).join('');
+}
+
+let todasAsLinhas = [];
+
+function aplicarBusca() {
+  renderizar(filtrarLinhas(todasAsLinhas, document.getElementById('busca').value));
+}
+
+async function carregar() {
+  const mensagem = document.getElementById('mensagem');
+  // Hook de teste: a verificação da Task 8 injeta dados aqui, sem precisar de um
+  // projeto Supabase real (que só existe a partir da Task 12).
+  if (window.__FIXTURE_SALDOS__) {
+    todasAsLinhas = window.__FIXTURE_SALDOS__;
+    aplicarBusca();
+    return;
+  }
+  if (!cliente) {
+    mensagem.hidden = false;
+    mensagem.textContent = 'Painel não configurado: defina a URL e a chave do Supabase em js/supabase.js.';
+    return;
+  }
+  const { data, error } = await cliente.from('saldos_itens').select('*');
+  if (error) {
+    mensagem.hidden = false;
+    mensagem.textContent = 'Não foi possível carregar o painel: ' + error.message;
+    return;
+  }
+  todasAsLinhas = data || [];
+  aplicarBusca();
+}
+
+document.getElementById('busca').addEventListener('input', aplicarBusca);
+carregar();
+</script>
+</body>
+</html>
