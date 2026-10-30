@@ -65,3 +65,59 @@ BEGIN
   RETURN QUERY SELECT v_numero, v_aviso;
 END;
 $$;
+
+-- Registrar devolução (Task 4).
+-- A devolução é sempre vinculada a uma retirada concluída. Só é possível devolver o que ainda está em uso.
+CREATE OR REPLACE FUNCTION registrar_devolucao(
+  p_retirada_numero text,
+  p_quantidade      integer,
+  p_condicao        text,
+  p_responsavel     text
+)
+RETURNS text
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  r          movimentacoes%ROWTYPE;
+  v_em_uso   integer;
+  v_numero   text;
+BEGIN
+  SELECT * INTO r FROM movimentacoes
+  WHERE numero = p_retirada_numero AND tipo = 'retirada'
+  FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'retirada não encontrada: %', p_retirada_numero;
+  END IF;
+
+  IF r.status <> 'concluida' THEN
+    RAISE EXCEPTION 'retirada ainda não regularizada: %', p_retirada_numero;
+  END IF;
+
+  IF p_condicao NOT IN ('reuso', 'defeito') THEN
+    RAISE EXCEPTION 'condição inválida: %', p_condicao;
+  END IF;
+
+  IF p_quantidade IS NULL OR p_quantidade <= 0 THEN
+    RAISE EXCEPTION 'quantidade deve ser maior que zero';
+  END IF;
+
+  SELECT r.quantidade - coalesce(sum(d.quantidade), 0) INTO v_em_uso
+  FROM movimentacoes d
+  WHERE d.retirada_origem_id = r.id AND d.tipo = 'devolucao';
+
+  IF v_em_uso <= 0 THEN
+    RAISE EXCEPTION 'retirada % já devolvida', p_retirada_numero;
+  END IF;
+
+  IF p_quantidade > v_em_uso THEN
+    RAISE EXCEPTION 'quantidade excede o saldo em uso (%)', v_em_uso;
+  END IF;
+
+  v_numero := 'DEV-' || lpad(nextval('seq_dev')::text, 4, '0');
+
+  INSERT INTO movimentacoes (numero, tipo, item_id, quantidade, retirada_origem_id, condicao, responsavel, status)
+  VALUES (v_numero, 'devolucao', r.item_id, p_quantidade, r.id, p_condicao, p_responsavel, 'concluida');
+
+  RETURN v_numero;
+END;
+$$;

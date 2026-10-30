@@ -31,4 +31,8 @@ reset; aplicar db/01_schema.sql db/02_saldos.sql db/03_operacoes.sql
 psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/03_retirada_test.sql >/dev/null
 bash db/tests/03_concorrencia.sh db/03_operacoes.sql >/dev/null
 
-echo "Suite do banco: schema 4/4, saldos 4/4, retirada 6/6, concorrência 1/1 — todos passam"
+# Devoluções: 01, 02 e 03 (registrar_devolucao está em 03_operacoes.sql).
+reset; aplicar db/01_schema.sql db/02_saldos.sql db/03_operacoes.sql
+psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/04_devolucao_test.sql >/dev/null
+
+echo "Suite do banco: schema 4/4, saldos 4/4, retirada 6/6, concorrência 1/1, devolução 6/6 — todos passam"
