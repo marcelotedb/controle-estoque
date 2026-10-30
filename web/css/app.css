@@ -129,3 +129,88 @@ body {
   padding: 10px 12px;
   margin-top: 12px;
 }
+
+/* Formulários de retirada, devolução e cadastro (Task 9 em diante). */
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.campo label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.campo input,
+.campo select {
+  padding: 10px 12px;
+  font-size: 1rem;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+}
+
+.botao {
+  padding: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--cor-link);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.botao.secundario {
+  background: #fff;
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-borda);
+}
+
+.destaque-numero {
+  background: #e6f4ea;
+  border: 1px solid #1e7e34;
+  color: #1e7e34;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.dialogo-confirmacao {
+  background: var(--cor-cartao);
+  border: 1px solid var(--cor-alerta-borda);
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dialogo-confirmacao .acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.resultado-busca {
+  width: 100%;
+  text-align: left;
+  background: var(--cor-cartao);
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.resultado-busca.selecionado {
+  border-color: var(--cor-link);
+  background: #eef4ff;
+}

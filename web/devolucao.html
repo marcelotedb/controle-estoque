@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Devolução — Controle de Estoque</title>
+<link rel="stylesheet" href="css/app.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+</head>
+<body>
+<header class="topo">
+  <h1>Controle de Estoque</h1>
+  <nav class="menu">
+    <a href="index.html">Painel</a>
+    <a href="retirada.html">Retirada</a>
+    <a href="devolucao.html" class="ativo">Devolução</a>
+    <a href="itens.html">Itens e locais</a>
+  </nav>
+</header>
+
+<main class="conteudo">
+  <h2 class="titulo-secao">Registrar devolução</h2>
+
+  <input id="busca-retirada" class="busca" type="search" placeholder="Buscar retirada por número, responsável, local ou data…" autocomplete="off">
+  <div class="lista" id="lista-retiradas"></div>
+
+  <form id="form-devolucao" class="formulario" hidden>
+    <p>Devolvendo a retirada <strong id="numero-selecionado"></strong></p>
+
+    <div class="campo">
+      <label for="quantidade">Quantidade</label>
+      <input id="quantidade" type="number" min="1" step="1" required>
+    </div>
+
+    <div class="campo">
+      <label for="condicao">Condição</label>
+      <select id="condicao" required>
+        <option value="" disabled selected>Selecione…</option>
+        <option value="reuso">Reuso (volta ao estoque disponível)</option>
+        <option value="defeito">Defeito (fica pendente de conferência)</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="responsavel">Responsável</label>
+      <input id="responsavel" type="text" required>
+    </div>
+
+    <button type="submit" class="botao">Registrar devolução</button>
+  </form>
+
+  <p id="resultado" class="destaque-numero" hidden></p>
+  <p id="mensagem" class="mensagem" hidden></p>
+</main>
+
+<script type="module">
+import { chamar as chamarReal, listarLocais as listarLocaisReal, listarRetiradasConcluidas as listarRetiradasReal } from './js/supabase.js';
+import { filtrarRetiradas } from './js/devolucao.js';
+
+// Ganchos de teste: a verificação da Task 9 injeta dados e respostas aqui,
+// sem precisar de um projeto Supabase real (que só existe a partir da Task 12).
+const chamar = (...args) => (window.__CHAMAR_TESTE__ ? window.__CHAMAR_TESTE__(...args) : chamarReal(...args));
+const listarLocais = async () => (window.__FIXTURE_LOCAIS__ ? { dados: window.__FIXTURE_LOCAIS__, erro: null } : await listarLocaisReal());
+const listarRetiradas = async () => (window.__FIXTURE_RETIRADAS__ ? { dados: window.__FIXTURE_RETIRADAS__, erro: null } : await listarRetiradasReal());
+
+const elBusca = document.getElementById('busca-retirada');
+const elListaRetiradas = document.getElementById('lista-retiradas');
+const elForm = document.getElementById('form-devolucao');
+const elNumeroSelecionado = document.getElementById('numero-selecionado');
+const elQuantidade = document.getElementById('quantidade');
+const elCondicao = document.getElementById('condicao');
+const elResponsavel = document.getElementById('responsavel');
+const elResultado = document.getElementById('resultado');
+const elMensagem = document.getElementById('mensagem');
+
+let retiradas = [];
+let numeroSelecionado = null;
+
+function mostrarMensagem(texto) {
+  elMensagem.hidden = false;
+  elMensagem.textContent = texto;
+}
+
+function limparMensagem() {
+  elMensagem.hidden = true;
+}
+
+function renderizarLista() {
+  const linhas = filtrarRetiradas(retiradas, elBusca.value);
+  elListaRetiradas.innerHTML = linhas
+    .map(
+      (r) => `
+      <button type="button" class="resultado-busca ${r.numero === numeroSelecionado ? 'selecionado' : ''}" data-numero="${r.numero}">
+        ${r.numero} · ${r.responsavel} · ${r.local_nome || 'sem local'} · ${(r.data_hora || '').slice(0, 10)}
+      </button>`
+    )
+    .join('') || '<p class="vazio">Nenhuma retirada encontrada.</p>';
+
+  for (const botao of elListaRetiradas.querySelectorAll('.resultado-busca')) {
+    botao.addEventListener('click', () => selecionarRetirada(botao.dataset.numero));
+  }
+}
+
+function selecionarRetirada(numero) {
+  numeroSelecionado = numero;
+  elNumeroSelecionado.textContent = numero;
+  elForm.hidden = false;
+  elResultado.hidden = true;
+  limparMensagem();
+  renderizarLista();
+}
+
+async function carregar() {
+  const [rl, rr] = await Promise.all([listarLocais(), listarRetiradas()]);
+  const locaisPorId = new Map((rl.dados || []).map((l) => [l.id, l.nome]));
+  retiradas = (rr.dados || []).map((r) => ({ ...r, local_nome: locaisPorId.get(r.local_uso_id) }));
+  renderizarLista();
+}
+
+elBusca.addEventListener('input', renderizarLista);
+
+elForm.addEventListener('submit', async (evento) => {
+  evento.preventDefault();
+  limparMensagem();
+  const { dados, erro } = await chamar('registrar_devolucao', {
+    p_retirada_numero: numeroSelecionado,
+    p_quantidade: Number(elQuantidade.value),
+    p_condicao: elCondicao.value,
+    p_responsavel: elResponsavel.value,
+  });
+  if (erro) {
+    mostrarMensagem(erro.message);
+    return;
+  }
+  elResultado.hidden = false;
+  elResultado.textContent = dados;
+  elForm.reset();
+  elForm.hidden = true;
+  numeroSelecionado = null;
+  renderizarLista();
+});
+
+carregar();
+</script>
+</body>
+</html>

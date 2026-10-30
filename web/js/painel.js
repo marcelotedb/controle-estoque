@@ -1,5 +1,6 @@
 // Lógica pura do painel (Task 8): separa alertas e pendências, e filtra por busca.
 // Sem dependência de rede, para poder ser testada sem um projeto Supabase real.
+import { normalizar } from './texto.js';
 
 /**
  * Separa as linhas de saldos_itens em três seções, nesta ordem de exibição:
@@ -22,14 +23,6 @@ export function separarSecoes(linhas) {
     }
   }
   return { alertas, pendentes, normais };
-}
-
-function normalizar(texto) {
-  return texto
-    .toString()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '');
 }
 
 /** Filtra linhas por nome, código ou localização, sem diferenciar maiúsculas ou acentos. */

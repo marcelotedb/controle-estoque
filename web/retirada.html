@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retirada — Controle de Estoque</title>
+<link rel="stylesheet" href="css/app.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+</head>
+<body>
+<header class="topo">
+  <h1>Controle de Estoque</h1>
+  <nav class="menu">
+    <a href="index.html">Painel</a>
+    <a href="retirada.html" class="ativo">Retirada</a>
+    <a href="devolucao.html">Devolução</a>
+    <a href="itens.html">Itens e locais</a>
+  </nav>
+</header>
+
+<main class="conteudo">
+  <h2 class="titulo-secao">Registrar retirada</h2>
+
+  <form id="form-retirada" class="formulario">
+    <div class="campo">
+      <label for="item-busca">Item</label>
+      <input id="item-busca" type="text" list="lista-itens" placeholder="Busque por nome ou código…" autocomplete="off" required>
+      <datalist id="lista-itens"></datalist>
+    </div>
+
+    <div class="campo">
+      <label for="quantidade">Quantidade</label>
+      <input id="quantidade" type="number" min="1" step="1" required>
+    </div>
+
+    <div class="campo">
+      <label for="unidade">Unidade</label>
+      <select id="unidade" required>
+        <option value="" disabled selected>Selecione…</option>
+        <option value="XAM">XAM — Xambioá (sede)</option>
+        <option value="SAGA">SAGA — São Geraldo do Araguaia</option>
+        <option value="ARA">ARA — Araguanã</option>
+      </select>
+    </div>
+
+    <div class="campo">
+      <label for="local-busca">Local de uso</label>
+      <input id="local-busca" type="text" list="lista-locais" placeholder="Busque ou digite um novo local…" autocomplete="off" required>
+      <datalist id="lista-locais"></datalist>
+    </div>
+
+    <div class="campo">
+      <label for="responsavel">Responsável</label>
+      <input id="responsavel" type="text" required>
+    </div>
+
+    <button type="submit" class="botao">Registrar retirada</button>
+  </form>
+
+  <div id="dialogo-confirmacao" class="dialogo-confirmacao" hidden>
+    <p id="texto-confirmacao"></p>
+    <div class="acoes">
+      <button id="btn-cancelar-confirmacao" type="button" class="botao secundario">Cancelar</button>
+      <button id="btn-confirmar-unidade" type="button" class="botao">Confirmar e registrar</button>
+    </div>
+  </div>
+
+  <p id="resultado" class="destaque-numero" hidden></p>
+  <p id="mensagem" class="mensagem" hidden></p>
+</main>
+
+<script type="module">
+import { chamar as chamarReal, listarItens as listarItensReal, listarLocais as listarLocaisReal, listarUnidades as listarUnidadesReal } from './js/supabase.js';
+import { filtrarItens, filtrarLocais, localExigeConfirmacao, precisaConfirmarUnidade } from './js/retirada.js';
+
+// Ganchos de teste: a verificação da Task 9 injeta dados e respostas aqui,
+// sem precisar de um projeto Supabase real (que só existe a partir da Task 12).
+const chamar = (...args) => (window.__CHAMAR_TESTE__ ? window.__CHAMAR_TESTE__(...args) : chamarReal(...args));
+const listarItens = async () => (window.__FIXTURE_ITENS__ ? { dados: window.__FIXTURE_ITENS__, erro: null } : await listarItensReal());
+const listarLocais = async () => (window.__FIXTURE_LOCAIS__ ? { dados: window.__FIXTURE_LOCAIS__, erro: null } : await listarLocaisReal());
+const listarUnidades = async () => (window.__FIXTURE_UNIDADES__ ? { dados: window.__FIXTURE_UNIDADES__, erro: null } : await listarUnidadesReal());
+
+const elItemBusca = document.getElementById('item-busca');
+const elListaItens = document.getElementById('lista-itens');
+const elLocalBusca = document.getElementById('local-busca');
+const elListaLocais = document.getElementById('lista-locais');
+const elUnidade = document.getElementById('unidade');
+const elQuantidade = document.getElementById('quantidade');
+const elResponsavel = document.getElementById('responsavel');
+const elForm = document.getElementById('form-retirada');
+const elDialogo = document.getElementById('dialogo-confirmacao');
+const elTextoConfirmacao = document.getElementById('texto-confirmacao');
+const elBtnConfirmar = document.getElementById('btn-confirmar-unidade');
+const elBtnCancelar = document.getElementById('btn-cancelar-confirmacao');
+const elResultado = document.getElementById('resultado');
+const elMensagem = document.getElementById('mensagem');
+
+let itens = [];
+let locais = [];
+let unidades = [];
+
+function preencherOpcoes(datalist, linhas, rotulo) {
+  datalist.innerHTML = linhas.map((l) => `<option value="${rotulo(l)}"></option>`).join('');
+}
+
+async function carregarListas() {
+  const [ri, rl, ru] = await Promise.all([listarItens(), listarLocais(), listarUnidades()]);
+  itens = ri.dados || [];
+  locais = rl.dados || [];
+  unidades = ru.dados || [];
+  preencherOpcoes(elListaItens, itens, (i) => `${i.codigo} — ${i.nome}`);
+  preencherOpcoes(elListaLocais, locais, (l) => l.nome);
+}
+
+function encontrarItemPeloTexto(texto) {
+  const codigo = texto.split('—')[0].trim();
+  return filtrarItens(itens, codigo).find((i) => i.codigo === codigo) || itens.find((i) => `${i.codigo} — ${i.nome}` === texto);
+}
+
+function encontrarLocalPeloNome(nome) {
+  return locais.find((l) => l.nome === nome.trim());
+}
+
+function mostrarMensagem(texto) {
+  elMensagem.hidden = false;
+  elMensagem.textContent = texto;
+}
+
+function limparMensagem() {
+  elMensagem.hidden = true;
+}
+
+function esconderDialogo() {
+  elDialogo.hidden = true;
+}
+
+async function registrar(local, params) {
+  limparMensagem();
+  const { dados, erro } = await chamar('registrar_retirada', params);
+  if (erro) {
+    if (precisaConfirmarUnidade(erro.message)) {
+      abrirDialogoConfirmacao(local, params);
+      return;
+    }
+    mostrarMensagem(erro.message);
+    return;
+  }
+  const linha = Array.isArray(dados) ? dados[0] : dados;
+  elResultado.hidden = false;
+  elResultado.textContent = linha.aviso ? `${linha.numero} — ${linha.aviso}` : linha.numero;
+  elForm.reset();
+  esconderDialogo();
+}
+
+function abrirDialogoConfirmacao(local, params) {
+  elTextoConfirmacao.textContent = `O local "${local.nome}" pertence a outra unidade. Confirmar mesmo assim?`;
+  elDialogo.hidden = false;
+  elBtnConfirmar.onclick = () => registrar(local, { ...params, p_confirmar_unidade_diferente: true });
+  elBtnCancelar.onclick = () => esconderDialogo();
+}
+
+elForm.addEventListener('submit', async (evento) => {
+  evento.preventDefault();
+  elResultado.hidden = true;
+  esconderDialogo();
+
+  const item = encontrarItemPeloTexto(elItemBusca.value);
+  if (!item) {
+    mostrarMensagem('Selecione um item da lista.');
+    return;
+  }
+  const local = encontrarLocalPeloNome(elLocalBusca.value);
+  if (!local) {
+    mostrarMensagem('Selecione um local de uso da lista, ou cadastre-o antes em "Itens e locais".');
+    return;
+  }
+  const unidade = unidades.find((u) => u.codigo === elUnidade.value);
+
+  const params = {
+    p_item_id: item.id,
+    p_quantidade: Number(elQuantidade.value),
+    p_unidade_codigo: elUnidade.value,
+    p_local_uso_id: local.id,
+    p_responsavel: elResponsavel.value,
+    p_confirmar_unidade_diferente: false,
+  };
+
+  if (unidade && localExigeConfirmacao(local, unidade.id)) {
+    abrirDialogoConfirmacao(local, params);
+    return;
+  }
+
+  await registrar(local, params);
+});
+
+carregarListas();
+</script>
+</body>
+</html>
