@@ -1,11 +1,10 @@
 // Cliente Supabase e helper de chamada (Task 8).
 //
-// ATENÇÃO: estas constantes são trocadas na Task 12, quando o projeto Supabase
-// real for criado. A chave aqui é a chave publicável (anon key): ela é feita para
-// ficar no navegador — a segurança do sistema depende das políticas de RLS do
-// banco (Task 6), nunca de esconder esta chave.
-const SUPABASE_URL = 'https://SEU-PROJETO.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'SUBSTITUA-PELA-CHAVE-PUBLICAVEL';
+// A chave aqui é a chave publicável: ela é feita para ficar no navegador — a
+// segurança do sistema depende das políticas de RLS do banco (Task 6) e das
+// restrições de EXECUTE nas funções (Task 12), nunca de esconder esta chave.
+const SUPABASE_URL = 'https://xcqroneaylqqgspeodib.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_Tcil1URTVJ2kwbd9WkstAQ_cSnBVkDX';
 
 export const cliente = (typeof window !== 'undefined' && window.supabase)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)

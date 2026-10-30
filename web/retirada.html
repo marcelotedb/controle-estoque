@@ -15,6 +15,7 @@
     <a href="retirada.html" class="ativo">Retirada</a>
     <a href="devolucao.html">Devolução</a>
     <a href="itens.html">Itens e locais</a>
+    <a href="#" id="link-sair">Sair</a>
   </nav>
 </header>
 
@@ -70,8 +71,11 @@
 </main>
 
 <script type="module">
-import { chamar as chamarReal, listarItens as listarItensReal, listarLocais as listarLocaisReal, listarUnidades as listarUnidadesReal } from './js/supabase.js';
+import { chamar as chamarReal, listarItens as listarItensReal, listarLocais as listarLocaisReal, listarUnidades as listarUnidadesReal, cliente } from './js/supabase.js';
 import { filtrarItens, filtrarLocais, localExigeConfirmacao, precisaConfirmarUnidade } from './js/retirada.js';
+import { exigirSessao, sair } from './js/autenticacao.js';
+
+document.getElementById('link-sair').addEventListener('click', (ev) => { ev.preventDefault(); sair(cliente); });
 
 // Ganchos de teste: a verificação da Task 9 injeta dados e respostas aqui,
 // sem precisar de um projeto Supabase real (que só existe a partir da Task 12).
@@ -104,6 +108,9 @@ function preencherOpcoes(datalist, linhas, rotulo) {
 }
 
 async function carregarListas() {
+  if (!window.__FIXTURE_ITENS__ && (await exigirSessao(cliente, 'retirada.html')) === null) {
+    return;
+  }
   const [ri, rl, ru] = await Promise.all([listarItens(), listarLocais(), listarUnidades()]);
   itens = ri.dados || [];
   locais = rl.dados || [];

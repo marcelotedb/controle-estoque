@@ -15,6 +15,7 @@
     <a href="retirada.html">Retirada</a>
     <a href="devolucao.html" class="ativo">Devolução</a>
     <a href="itens.html">Itens e locais</a>
+    <a href="#" id="link-sair">Sair</a>
   </nav>
 </header>
 
@@ -54,8 +55,11 @@
 </main>
 
 <script type="module">
-import { chamar as chamarReal, listarLocais as listarLocaisReal, listarRetiradasConcluidas as listarRetiradasReal } from './js/supabase.js';
+import { chamar as chamarReal, listarLocais as listarLocaisReal, listarRetiradasConcluidas as listarRetiradasReal, cliente } from './js/supabase.js';
 import { filtrarRetiradas } from './js/devolucao.js';
+import { exigirSessao, sair } from './js/autenticacao.js';
+
+document.getElementById('link-sair').addEventListener('click', (ev) => { ev.preventDefault(); sair(cliente); });
 
 // Ganchos de teste: a verificação da Task 9 injeta dados e respostas aqui,
 // sem precisar de um projeto Supabase real (que só existe a partir da Task 12).
@@ -111,6 +115,9 @@ function selecionarRetirada(numero) {
 }
 
 async function carregar() {
+  if (!window.__FIXTURE_RETIRADAS__ && (await exigirSessao(cliente, 'devolucao.html')) === null) {
+    return;
+  }
   const [rl, rr] = await Promise.all([listarLocais(), listarRetiradas()]);
   const locaisPorId = new Map((rl.dados || []).map((l) => [l.id, l.nome]));
   retiradas = (rr.dados || []).map((r) => ({ ...r, local_nome: locaisPorId.get(r.local_uso_id) }));

@@ -15,6 +15,7 @@
     <a href="retirada.html">Retirada</a>
     <a href="devolucao.html">Devolução</a>
     <a href="itens.html">Itens e locais</a>
+    <a href="#" id="link-sair">Sair</a>
   </nav>
 </header>
 
@@ -42,6 +43,9 @@
 <script type="module">
 import { separarSecoes, filtrarLinhas } from './js/painel.js';
 import { cliente } from './js/supabase.js';
+import { exigirSessao, sair } from './js/autenticacao.js';
+
+document.getElementById('link-sair').addEventListener('click', (ev) => { ev.preventDefault(); sair(cliente); });
 
 function linhaHTML(l) {
   const local = l.localizacao ? ` · ${l.localizacao}` : '';
@@ -77,6 +81,9 @@ async function carregar() {
   if (window.__FIXTURE_SALDOS__) {
     todasAsLinhas = window.__FIXTURE_SALDOS__;
     aplicarBusca();
+    return;
+  }
+  if ((await exigirSessao(cliente, 'index.html')) === null) {
     return;
   }
   if (!cliente) {
