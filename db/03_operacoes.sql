@@ -121,3 +121,41 @@ BEGIN
   RETURN v_numero;
 END;
 $$;
+
+-- Coluna adicional para a regularização de retirada pendente (Task 4b).
+ALTER TABLE movimentacoes ADD COLUMN IF NOT EXISTS responsavel_regularizacao text;
+
+-- Regularizar retirada pendente (Task 4b).
+-- Confirma que o material que já saiu em emergência ainda cabe no saldo e muda o status para concluída.
+CREATE OR REPLACE FUNCTION regularizar_retirada_pendente(
+  p_numero                     text,
+  p_responsavel_regularizacao  text
+)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  r        movimentacoes%ROWTYPE;
+  v_saldo  integer;
+BEGIN
+  SELECT * INTO r FROM movimentacoes
+  WHERE numero = p_numero AND tipo = 'retirada'
+  FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'retirada não encontrada: %', p_numero;
+  END IF;
+
+  IF r.status <> 'pendente' THEN
+    RAISE EXCEPTION 'retirada % não está pendente', p_numero;
+  END IF;
+
+  SELECT s.saldo_disponivel INTO v_saldo FROM saldos_itens s WHERE s.item_id = r.item_id;
+  IF v_saldo < r.quantidade THEN
+    RAISE EXCEPTION 'saldo insuficiente: disponível %', v_saldo;
+  END IF;
+
+  UPDATE movimentacoes
+  SET status = 'concluida', responsavel_regularizacao = p_responsavel_regularizacao
+  WHERE id = r.id;
+END;
+$$;
