@@ -1,4 +1,4 @@
--- Testes de RLS (Task 6). Roda como app_user (não-superusuário, sem BYPASSRLS),
+-- Testes de RLS (Task 6). Roda como authenticated (não-superusuário, sem BYPASSRLS),
 -- com auth.uid() simulado via app.current_user_id. Fixture criada como superusuário.
 
 INSERT INTO auth.users DEFAULT VALUES; -- operador
@@ -27,14 +27,14 @@ BEGIN
   UPDATE ctx6 SET ajuste_id = v_op;
 END $$;
 
-GRANT SELECT ON ctx6 TO app_user;
+GRANT SELECT ON ctx6 TO authenticated;
 
 -- 1. Operador consegue inserir em itens e em movimentacoes.
 DO $$
 DECLARE v_uid uuid;
 BEGIN
   SELECT op INTO v_uid FROM ctx6;
-  SET ROLE app_user;
+  SET ROLE authenticated;
   PERFORM set_config('app.current_user_id', v_uid::text, false);
 
   INSERT INTO itens (codigo, nome, categoria, localizacao, quantidade_minima)
@@ -54,7 +54,7 @@ DO $$
 DECLARE v_uid uuid; v_ajuste uuid; v_status text;
 BEGIN
   SELECT op, ajuste_id INTO v_uid, v_ajuste FROM ctx6;
-  SET ROLE app_user;
+  SET ROLE authenticated;
   PERFORM set_config('app.current_user_id', v_uid::text, false);
 
   UPDATE movimentacoes SET status = 'concluida' WHERE id = v_ajuste;
@@ -71,7 +71,7 @@ DO $$
 DECLARE v_uid uuid; v_ajuste uuid;
 BEGIN
   SELECT op, ajuste_id INTO v_uid, v_ajuste FROM ctx6;
-  SET ROLE app_user;
+  SET ROLE authenticated;
   PERFORM set_config('app.current_user_id', v_uid::text, false);
 
   DELETE FROM movimentacoes WHERE id = v_ajuste;
@@ -87,7 +87,7 @@ DO $$
 DECLARE v_uid uuid; v_ajuste uuid; v_status text;
 BEGIN
   SELECT dono, ajuste_id INTO v_uid, v_ajuste FROM ctx6;
-  SET ROLE app_user;
+  SET ROLE authenticated;
   PERFORM set_config('app.current_user_id', v_uid::text, false);
 
   UPDATE movimentacoes SET status = 'concluida' WHERE id = v_ajuste;
@@ -104,7 +104,7 @@ DO $$
 DECLARE v_uid uuid; v_qtd integer;
 BEGIN
   SELECT sem_perfil INTO v_uid FROM ctx6;
-  SET ROLE app_user;
+  SET ROLE authenticated;
   PERFORM set_config('app.current_user_id', v_uid::text, false);
 
   SELECT count(*) INTO v_qtd FROM itens;

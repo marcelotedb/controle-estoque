@@ -26,21 +26,24 @@ psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/01_schema_test.sql >/dev/null
 reset; aplicar db/01_schema.sql db/02_saldos.sql
 psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/02_saldos_test.sql >/dev/null
 
-# Operações: 01, 02 e 03.
-reset; aplicar db/01_schema.sql db/02_saldos.sql db/03_operacoes.sql
+# Operações: 01, 02, 03, stub local de auth e 04 (registrar_retirada agora exige tem_perfil()).
+psql "$DB" -v ON_ERROR_STOP=1 -q -c "DROP SCHEMA IF EXISTS auth CASCADE;" >/dev/null 2>&1
+reset; aplicar db/01_schema.sql db/02_saldos.sql db/03_operacoes.sql db/tests/local_auth_stub.sql db/04_permissoes.sql
 psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/03_retirada_test.sql >/dev/null
 bash db/tests/03_concorrencia.sh db/03_operacoes.sql >/dev/null
 
-# Devoluções: 01, 02 e 03 (registrar_devolucao está em 03_operacoes.sql).
-reset; aplicar db/01_schema.sql db/02_saldos.sql db/03_operacoes.sql
+# Devoluções: 01, 02, 03, stub local de auth e 04 (registrar_devolucao também exige tem_perfil()).
+psql "$DB" -v ON_ERROR_STOP=1 -q -c "DROP SCHEMA IF EXISTS auth CASCADE;" >/dev/null 2>&1
+reset; aplicar db/01_schema.sql db/02_saldos.sql db/03_operacoes.sql db/tests/local_auth_stub.sql db/04_permissoes.sql
 psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/04_devolucao_test.sql >/dev/null
 
-# Regularização de pendência: 01, 02 e 03 (inclui a ALTER TABLE da Task 4b).
-reset; aplicar db/01_schema.sql db/02_saldos.sql db/03_operacoes.sql
+# Regularização de pendência: 01, 02, 03, stub local de auth e 04 (regularizar_retirada_pendente idem).
+psql "$DB" -v ON_ERROR_STOP=1 -q -c "DROP SCHEMA IF EXISTS auth CASCADE;" >/dev/null 2>&1
+reset; aplicar db/01_schema.sql db/02_saldos.sql db/03_operacoes.sql db/tests/local_auth_stub.sql db/04_permissoes.sql
 psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/04b_regularizacao_test.sql >/dev/null
 
 # RLS: 01, 02, 03, stub local de auth e 04. O stub simula o que o Supabase real já
-# fornece (auth.users, auth.uid()) e cria o papel app_user só para o teste rodar
+# fornece (auth.users, auth.uid()) e cria o papel authenticated só para o teste rodar
 # sem ser superusuário, já que superusuário ignora RLS. O papel nunca é removido
 # entre resets: seus privilégios dependem dos objetos da tabela, que já desaparecem
 # com o DROP SCHEMA public CASCADE (dropar o papel em si falha, pois ele ainda

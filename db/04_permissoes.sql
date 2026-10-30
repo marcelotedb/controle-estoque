@@ -57,3 +57,28 @@ CREATE POLICY perfis_select    ON perfis        FOR SELECT USING (usuario_id = a
 ALTER FUNCTION registrar_retirada(uuid, integer, text, uuid, text, boolean, boolean) SECURITY DEFINER SET search_path = public;
 ALTER FUNCTION registrar_devolucao(text, integer, text, text) SECURITY DEFINER SET search_path = public;
 ALTER FUNCTION regularizar_retirada_pendente(text, text) SECURITY DEFINER SET search_path = public;
+
+-- Ninguém chama estas funções sem estar autenticado: revoga de PUBLIC (que
+-- inclui "anon") e concede só a "authenticated". A validação interna de
+-- tem_perfil()/eh_dono() continua sendo a defesa real; isto é a segunda camada.
+REVOKE EXECUTE ON FUNCTION eh_dono() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION tem_perfil() FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION registrar_retirada(uuid, integer, text, uuid, text, boolean, boolean) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION registrar_devolucao(text, integer, text, text) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION regularizar_retirada_pendente(text, text) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION registrar_item(text, text, text, integer) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION registrar_local_uso(text, text, text) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION verificar_duplicata_item(text) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION verificar_duplicata_local(text) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION normalizar_nome(text) FROM PUBLIC;
+
+GRANT EXECUTE ON FUNCTION eh_dono() TO authenticated;
+GRANT EXECUTE ON FUNCTION tem_perfil() TO authenticated;
+GRANT EXECUTE ON FUNCTION registrar_retirada(uuid, integer, text, uuid, text, boolean, boolean) TO authenticated;
+GRANT EXECUTE ON FUNCTION registrar_devolucao(text, integer, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION regularizar_retirada_pendente(text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION registrar_item(text, text, text, integer) TO authenticated;
+GRANT EXECUTE ON FUNCTION registrar_local_uso(text, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION verificar_duplicata_item(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION verificar_duplicata_local(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION normalizar_nome(text) TO authenticated;

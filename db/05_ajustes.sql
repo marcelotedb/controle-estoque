@@ -9,6 +9,7 @@ CREATE OR REPLACE FUNCTION solicitar_ajuste(
 )
 RETURNS uuid
 LANGUAGE plpgsql
+SET search_path = public
 AS $$
 DECLARE
   v_id uuid;
@@ -29,6 +30,7 @@ $$;
 CREATE OR REPLACE FUNCTION aprovar_ajuste(p_ajuste_id uuid)
 RETURNS void
 LANGUAGE plpgsql
+SET search_path = public
 AS $$
 DECLARE
   r movimentacoes%ROWTYPE;
@@ -49,3 +51,8 @@ BEGIN
   UPDATE movimentacoes SET status = 'concluida' WHERE id = p_ajuste_id;
 END;
 $$;
+
+REVOKE EXECUTE ON FUNCTION solicitar_ajuste(uuid, integer, text, text) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION aprovar_ajuste(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION solicitar_ajuste(uuid, integer, text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION aprovar_ajuste(uuid) TO authenticated;

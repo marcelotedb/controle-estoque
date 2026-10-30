@@ -22,6 +22,14 @@ DECLARE
   v_numero     text;
   v_aviso      text := NULL;
 BEGIN
+  -- Esta função é SECURITY DEFINER (Task 6), então roda com os privilégios do
+  -- dono do banco, que não está sujeito à política de RLS mov_insert. Sem esta
+  -- checagem, qualquer chamada à API (até sem autenticação) conseguiria inserir
+  -- movimentações, ignorando a exigência de perfil cadastrado.
+  IF NOT tem_perfil() THEN
+    RAISE EXCEPTION 'usuário sem perfil não pode registrar movimentações';
+  END IF;
+
   IF p_quantidade IS NULL OR p_quantidade <= 0 THEN
     RAISE EXCEPTION 'quantidade deve ser maior que zero';
   END IF;
@@ -82,6 +90,12 @@ DECLARE
   v_em_uso   integer;
   v_numero   text;
 BEGIN
+  -- Mesma razão da checagem em registrar_retirada: esta função é SECURITY
+  -- DEFINER e por isso não está sujeita à política mov_insert por conta própria.
+  IF NOT tem_perfil() THEN
+    RAISE EXCEPTION 'usuário sem perfil não pode registrar movimentações';
+  END IF;
+
   SELECT * INTO r FROM movimentacoes
   WHERE numero = p_retirada_numero AND tipo = 'retirada'
   FOR UPDATE;
@@ -138,6 +152,12 @@ DECLARE
   r        movimentacoes%ROWTYPE;
   v_saldo  integer;
 BEGIN
+  -- Mesma razão da checagem em registrar_retirada: esta função é SECURITY
+  -- DEFINER e por isso não está sujeita à política mov_update por conta própria.
+  IF NOT tem_perfil() THEN
+    RAISE EXCEPTION 'usuário sem perfil não pode registrar movimentações';
+  END IF;
+
   SELECT * INTO r FROM movimentacoes
   WHERE numero = p_numero AND tipo = 'retirada'
   FOR UPDATE;
@@ -173,6 +193,7 @@ CREATE OR REPLACE FUNCTION registrar_item(
 )
 RETURNS text
 LANGUAGE plpgsql
+SET search_path = public
 AS $$
 DECLARE
   v_codigo text;
@@ -191,6 +212,7 @@ CREATE OR REPLACE FUNCTION registrar_local_uso(
 )
 RETURNS uuid
 LANGUAGE plpgsql
+SET search_path = public
 AS $$
 DECLARE
   v_unidade_id uuid := NULL;
@@ -215,12 +237,16 @@ END;
 $$;
 
 -- Verificação de duplicidade (Task 7).
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-CREATE EXTENSION IF NOT EXISTS unaccent;
+-- As extensões ficam em um schema próprio (não em "public"), seguindo a boa
+-- prática do Supabase; as funções abaixo incluem esse schema no search_path.
+CREATE SCHEMA IF NOT EXISTS extensions;
+CREATE EXTENSION IF NOT EXISTS pg_trgm SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS unaccent SCHEMA extensions;
 
 -- Normaliza para comparação: minúsculas, sem acento, espaços colapsados e sem sobra nas pontas.
 CREATE OR REPLACE FUNCTION normalizar_nome(p_nome text) RETURNS text
 LANGUAGE sql IMMUTABLE
+SET search_path = public, extensions
 AS $$
   SELECT trim(regexp_replace(unaccent(lower(p_nome)), '\s+', ' ', 'g'));
 $$;
@@ -228,6 +254,7 @@ $$;
 CREATE OR REPLACE FUNCTION verificar_duplicata_item(p_nome text)
 RETURNS TABLE (item_id uuid, nome text, codigo text)
 LANGUAGE sql STABLE
+SET search_path = public, extensions
 AS $$
   SELECT i.id, i.nome, i.codigo
   FROM itens i
@@ -239,6 +266,7 @@ $$;
 CREATE OR REPLACE FUNCTION verificar_duplicata_local(p_nome text)
 RETURNS TABLE (local_uso_id uuid, nome text)
 LANGUAGE sql STABLE
+SET search_path = public, extensions
 AS $$
   SELECT l.id, l.nome
   FROM locais_uso l

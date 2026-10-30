@@ -10,6 +10,11 @@ VALUES ('T-RET', 'Item de retirada', 'Insumos', 'prateleira R', 0);
 INSERT INTO movimentacoes (tipo, item_id, quantidade, responsavel, status)
 SELECT 'ajuste', id, 10, 'teste', 'concluida' FROM itens WHERE codigo = 'T-RET';
 
+-- Autenticação simulada: registrar_retirada agora exige tem_perfil() (RLS/Task 6).
+INSERT INTO auth.users (id) VALUES ('11111111-1111-1111-1111-111111111111');
+INSERT INTO perfis (usuario_id, papel) VALUES ('11111111-1111-1111-1111-111111111111', 'operador');
+SELECT set_config('app.current_user_id', '11111111-1111-1111-1111-111111111111', false);
+
 -- 1. Retirada de 3 com saldo 10 gera RET-0001 e o saldo cai para 7.
 DO $$
 DECLARE r record;

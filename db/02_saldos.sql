@@ -35,3 +35,7 @@ SELECT
   a.*,
   (a.saldo_disponivel <= a.quantidade_minima) AS em_alerta
 FROM agregado a;
+
+-- Sem isto, a view roda com os privilégios do dono do banco (que não está
+-- sujeito a RLS), e um usuário sem perfil veria o saldo de todos os itens.
+ALTER VIEW saldos_itens SET (security_invoker = true);

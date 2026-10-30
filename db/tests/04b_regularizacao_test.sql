@@ -8,6 +8,11 @@ VALUES ('T-PEN', 'Item de pendencia', 'Insumos', 'prateleira P', 0);
 INSERT INTO movimentacoes (tipo, item_id, quantidade, responsavel, status)
 SELECT 'ajuste', id, 10, 'teste', 'concluida' FROM itens WHERE codigo = 'T-PEN';
 
+-- Autenticação simulada: registrar_retirada/regularizar_retirada_pendente exigem tem_perfil() (RLS/Task 6).
+INSERT INTO auth.users (id) VALUES ('11111111-1111-1111-1111-111111111111');
+INSERT INTO perfis (usuario_id, papel) VALUES ('11111111-1111-1111-1111-111111111111', 'operador');
+SELECT set_config('app.current_user_id', '11111111-1111-1111-1111-111111111111', false);
+
 CREATE TEMP TABLE ctx4b (pendente text);
 INSERT INTO ctx4b
 SELECT r.numero FROM registrar_retirada(
