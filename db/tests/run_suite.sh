@@ -58,4 +58,8 @@ psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/05_ajustes_test.sql >/dev/null
 reset; aplicar db/01_schema.sql db/02_saldos.sql db/03_operacoes.sql
 psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/07_duplicata_test.sql >/dev/null
 
-echo "Suite do banco: schema 4/4, saldos 4/4, retirada 6/6, concorrência 1/1, devolução 6/6, regularização 5/5, RLS 5/5, ajustes 4/4, duplicidade 4/4 — todos passam"
+# Cadastro de itens e locais (Task 10): registrar_item e registrar_local_uso estão em 03_operacoes.sql.
+reset; aplicar db/01_schema.sql db/02_saldos.sql db/03_operacoes.sql
+psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/08_cadastro_test.sql >/dev/null
+
+echo "Suite do banco: schema 4/4, saldos 4/4, retirada 6/6, concorrência 1/1, devolução 6/6, regularização 5/5, RLS 5/5, ajustes 4/4, duplicidade 4/4, cadastro 6/6 — todos passam"

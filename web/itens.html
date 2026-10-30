@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Itens e locais — Controle de Estoque</title>
+<link rel="stylesheet" href="css/app.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+</head>
+<body>
+<header class="topo">
+  <h1>Controle de Estoque</h1>
+  <nav class="menu">
+    <a href="index.html">Painel</a>
+    <a href="retirada.html">Retirada</a>
+    <a href="devolucao.html">Devolução</a>
+    <a href="itens.html" class="ativo">Itens e locais</a>
+  </nav>
+</header>
+
+<main class="conteudo">
+  <h2 class="titulo-secao">Cadastrar item</h2>
+  <form id="form-item" class="formulario">
+    <div class="campo">
+      <label for="item-nome">Nome</label>
+      <input id="item-nome" type="text" required>
+    </div>
+    <div class="campo">
+      <label for="item-categoria">Categoria</label>
+      <select id="item-categoria" required>
+        <option value="" disabled selected>Selecione…</option>
+        <option value="Peças">Peças</option>
+        <option value="Revenda">Revenda</option>
+        <option value="Insumos">Insumos</option>
+      </select>
+    </div>
+    <div class="campo">
+      <label for="item-localizacao">Localização</label>
+      <input id="item-localizacao" type="text" placeholder="Ex.: prateleira 2, gaveta 3">
+    </div>
+    <div class="campo">
+      <label for="item-minimo">Quantidade mínima</label>
+      <input id="item-minimo" type="number" min="0" step="1" value="0" required>
+    </div>
+    <button type="submit" class="botao">Cadastrar item</button>
+  </form>
+
+  <div id="item-parecidos" class="dialogo-confirmacao" hidden>
+    <p>Já existem itens parecidos:</p>
+    <div class="lista" id="item-lista-parecidos"></div>
+    <div class="acoes">
+      <button id="item-btn-cancelar" type="button" class="botao secundario">Cancelar</button>
+      <button id="item-btn-confirmar" type="button" class="botao">Criar mesmo assim</button>
+    </div>
+  </div>
+
+  <p id="item-resultado" class="destaque-numero" hidden></p>
+  <p id="item-mensagem" class="mensagem" hidden></p>
+
+  <h2 class="titulo-secao">Cadastrar local de uso</h2>
+  <form id="form-local" class="formulario">
+    <div class="campo">
+      <label for="local-nome">Nome</label>
+      <input id="local-nome" type="text" required>
+    </div>
+    <div class="campo">
+      <label for="local-tipo">Tipo</label>
+      <select id="local-tipo" required>
+        <option value="" disabled selected>Selecione…</option>
+        <option value="compartilhado">Compartilhado (qualquer unidade)</option>
+        <option value="exclusivo">Exclusivo de uma unidade</option>
+      </select>
+    </div>
+    <div class="campo" id="campo-unidade" hidden>
+      <label for="local-unidade">Unidade</label>
+      <select id="local-unidade">
+        <option value="" disabled selected>Selecione…</option>
+        <option value="XAM">XAM — Xambioá (sede)</option>
+        <option value="SAGA">SAGA — São Geraldo do Araguaia</option>
+        <option value="ARA">ARA — Araguanã</option>
+      </select>
+    </div>
+    <button type="submit" class="botao">Cadastrar local</button>
+  </form>
+
+  <div id="local-parecidos" class="dialogo-confirmacao" hidden>
+    <p>Já existem locais parecidos:</p>
+    <div class="lista" id="local-lista-parecidos"></div>
+    <div class="acoes">
+      <button id="local-btn-cancelar" type="button" class="botao secundario">Cancelar</button>
+      <button id="local-btn-confirmar" type="button" class="botao">Criar mesmo assim</button>
+    </div>
+  </div>
+
+  <p id="local-resultado" class="destaque-numero" hidden></p>
+  <p id="local-mensagem" class="mensagem" hidden></p>
+</main>
+
+<script type="module">
+import { chamar as chamarReal } from './js/supabase.js';
+import { localExclusivoSemUnidade } from './js/itens.js';
+
+// Gancho de teste: a verificação da Task 10 injeta respostas aqui, sem precisar
+// de um projeto Supabase real (que só existe a partir da Task 12).
+const chamar = (...args) => (window.__CHAMAR_TESTE__ ? window.__CHAMAR_TESTE__(...args) : chamarReal(...args));
+
+// --- Item ---
+const elFormItem = document.getElementById('form-item');
+const elItemNome = document.getElementById('item-nome');
+const elItemCategoria = document.getElementById('item-categoria');
+const elItemLocalizacao = document.getElementById('item-localizacao');
+const elItemMinimo = document.getElementById('item-minimo');
+const elItemParecidos = document.getElementById('item-parecidos');
+const elItemListaParecidos = document.getElementById('item-lista-parecidos');
+const elItemBtnCancelar = document.getElementById('item-btn-cancelar');
+const elItemBtnConfirmar = document.getElementById('item-btn-confirmar');
+const elItemResultado = document.getElementById('item-resultado');
+const elItemMensagem = document.getElementById('item-mensagem');
+
+async function salvarItem() {
+  const params = {
+    p_nome: elItemNome.value,
+    p_categoria: elItemCategoria.value,
+    p_localizacao: elItemLocalizacao.value || null,
+    p_quantidade_minima: Number(elItemMinimo.value),
+  };
+  const { dados, erro } = await chamar('registrar_item', params);
+  elItemParecidos.hidden = true;
+  if (erro) {
+    elItemMensagem.hidden = false;
+    elItemMensagem.textContent = erro.message;
+    return;
+  }
+  elItemResultado.hidden = false;
+  elItemResultado.textContent = `Item cadastrado: ${dados}`;
+  elFormItem.reset();
+}
+
+elFormItem.addEventListener('submit', async (evento) => {
+  evento.preventDefault();
+  elItemMensagem.hidden = true;
+  elItemResultado.hidden = true;
+
+  const { dados: parecidos, erro } = await chamar('verificar_duplicata_item', { p_nome: elItemNome.value });
+  if (erro) {
+    elItemMensagem.hidden = false;
+    elItemMensagem.textContent = erro.message;
+    return;
+  }
+  if (parecidos && parecidos.length > 0) {
+    elItemListaParecidos.innerHTML = parecidos.map((p) => `<p class="linha">${p.codigo} — ${p.nome}</p>`).join('');
+    elItemParecidos.hidden = false;
+    elItemBtnConfirmar.onclick = salvarItem;
+    elItemBtnCancelar.onclick = () => { elItemParecidos.hidden = true; };
+    return;
+  }
+  await salvarItem();
+});
+
+// --- Local de uso ---
+const elFormLocal = document.getElementById('form-local');
+const elLocalNome = document.getElementById('local-nome');
+const elLocalTipo = document.getElementById('local-tipo');
+const elCampoUnidade = document.getElementById('campo-unidade');
+const elLocalUnidade = document.getElementById('local-unidade');
+const elLocalParecidos = document.getElementById('local-parecidos');
+const elLocalListaParecidos = document.getElementById('local-lista-parecidos');
+const elLocalBtnCancelar = document.getElementById('local-btn-cancelar');
+const elLocalBtnConfirmar = document.getElementById('local-btn-confirmar');
+const elLocalResultado = document.getElementById('local-resultado');
+const elLocalMensagem = document.getElementById('local-mensagem');
+
+elLocalTipo.addEventListener('change', () => {
+  // A unidade não é "required" nativamente: o bloqueio de local exclusivo sem
+  // unidade é feito pelo JavaScript do submit, para mostrar a mensagem certa.
+  elCampoUnidade.hidden = elLocalTipo.value !== 'exclusivo';
+});
+
+async function salvarLocal() {
+  const { dados, erro } = await chamar('registrar_local_uso', {
+    p_nome: elLocalNome.value,
+    p_tipo: elLocalTipo.value,
+    p_unidade_codigo: elLocalTipo.value === 'exclusivo' ? elLocalUnidade.value : null,
+  });
+  elLocalParecidos.hidden = true;
+  if (erro) {
+    elLocalMensagem.hidden = false;
+    elLocalMensagem.textContent = erro.message;
+    return;
+  }
+  elLocalResultado.hidden = false;
+  elLocalResultado.textContent = `Local cadastrado: ${elLocalNome.value}`;
+  elFormLocal.reset();
+  elCampoUnidade.hidden = true;
+}
+
+elFormLocal.addEventListener('submit', async (evento) => {
+  evento.preventDefault();
+  elLocalMensagem.hidden = true;
+  elLocalResultado.hidden = true;
+
+  // Bloqueio no cliente, antes de chamar o banco: local exclusivo sem unidade.
+  if (localExclusivoSemUnidade(elLocalTipo.value, elLocalUnidade.value)) {
+    elLocalMensagem.hidden = false;
+    elLocalMensagem.textContent = 'Selecione a unidade: um local exclusivo precisa de uma unidade.';
+    return;
+  }
+
+  const { dados: parecidos, erro } = await chamar('verificar_duplicata_local', { p_nome: elLocalNome.value });
+  if (erro) {
+    elLocalMensagem.hidden = false;
+    elLocalMensagem.textContent = erro.message;
+    return;
+  }
+  if (parecidos && parecidos.length > 0) {
+    elLocalListaParecidos.innerHTML = parecidos.map((p) => `<p class="linha">${p.nome}</p>`).join('');
+    elLocalParecidos.hidden = false;
+    elLocalBtnConfirmar.onclick = salvarLocal;
+    elLocalBtnCancelar.onclick = () => { elLocalParecidos.hidden = true; };
+    return;
+  }
+  await salvarLocal();
+});
+</script>
+</body>
+</html>

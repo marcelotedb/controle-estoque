@@ -160,6 +160,60 @@ BEGIN
 END;
 $$;
 
+-- Cadastro de itens e locais de uso (Task 10).
+-- Lacuna encontrada na Task 10: a especificação (seção 3) diz que o código do
+-- item é "gerado pelo sistema", mas nenhuma tarefa anterior gerou esse código.
+CREATE SEQUENCE IF NOT EXISTS seq_item;
+
+CREATE OR REPLACE FUNCTION registrar_item(
+  p_nome              text,
+  p_categoria         text,
+  p_localizacao       text,
+  p_quantidade_minima integer
+)
+RETURNS text
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_codigo text;
+BEGIN
+  v_codigo := 'ITM-' || lpad(nextval('seq_item')::text, 4, '0');
+  INSERT INTO itens (codigo, nome, categoria, localizacao, quantidade_minima)
+  VALUES (v_codigo, p_nome, p_categoria, p_localizacao, coalesce(p_quantidade_minima, 0));
+  RETURN v_codigo;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION registrar_local_uso(
+  p_nome           text,
+  p_tipo           text,
+  p_unidade_codigo text DEFAULT NULL
+)
+RETURNS uuid
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_unidade_id uuid := NULL;
+  v_id         uuid;
+BEGIN
+  IF p_tipo = 'exclusivo' THEN
+    IF p_unidade_codigo IS NULL THEN
+      RAISE EXCEPTION 'local exclusivo exige uma unidade';
+    END IF;
+    SELECT id INTO v_unidade_id FROM unidades WHERE codigo = p_unidade_codigo;
+    IF v_unidade_id IS NULL THEN
+      RAISE EXCEPTION 'unidade inválida: %', p_unidade_codigo;
+    END IF;
+  END IF;
+
+  INSERT INTO locais_uso (nome, tipo, unidade_id)
+  VALUES (p_nome, p_tipo, v_unidade_id)
+  RETURNING id INTO v_id;
+
+  RETURN v_id;
+END;
+$$;
+
 -- Verificação de duplicidade (Task 7).
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS unaccent;
