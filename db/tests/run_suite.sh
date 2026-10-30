@@ -39,4 +39,11 @@ psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/04_devolucao_test.sql >/dev/null
 reset; aplicar db/01_schema.sql db/02_saldos.sql db/03_operacoes.sql
 psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/04b_regularizacao_test.sql >/dev/null
 
-echo "Suite do banco: schema 4/4, saldos 4/4, retirada 6/6, concorrência 1/1, devolução 6/6, regularização 5/5 — todos passam"
+# RLS: 01, 02, 03, stub local de auth e 04. O stub simula o que o Supabase real já
+# fornece (auth.users, auth.uid()) e cria o papel app_user só para o teste rodar
+# sem ser superusuário, já que superusuário ignora RLS.
+psql "$DB" -v ON_ERROR_STOP=1 -q -c "DROP SCHEMA IF EXISTS auth CASCADE; DROP ROLE IF EXISTS app_user;" >/dev/null 2>&1
+reset; aplicar db/01_schema.sql db/02_saldos.sql db/03_operacoes.sql db/tests/local_auth_stub.sql db/04_permissoes.sql
+psql "$DB" -v ON_ERROR_STOP=1 -q -f db/tests/06_rls_test.sql >/dev/null
+
+echo "Suite do banco: schema 4/4, saldos 4/4, retirada 6/6, concorrência 1/1, devolução 6/6, regularização 5/5, RLS 5/5 — todos passam"
