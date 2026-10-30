@@ -58,19 +58,21 @@ ALTER FUNCTION registrar_retirada(uuid, integer, text, uuid, text, boolean, bool
 ALTER FUNCTION registrar_devolucao(text, integer, text, text) SECURITY DEFINER SET search_path = public;
 ALTER FUNCTION regularizar_retirada_pendente(text, text) SECURITY DEFINER SET search_path = public;
 
--- Ninguém chama estas funções sem estar autenticado: revoga de PUBLIC (que
--- inclui "anon") e concede só a "authenticated". A validação interna de
--- tem_perfil()/eh_dono() continua sendo a defesa real; isto é a segunda camada.
-REVOKE EXECUTE ON FUNCTION eh_dono() FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION tem_perfil() FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION registrar_retirada(uuid, integer, text, uuid, text, boolean, boolean) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION registrar_devolucao(text, integer, text, text) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION regularizar_retirada_pendente(text, text) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION registrar_item(text, text, text, integer) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION registrar_local_uso(text, text, text) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION verificar_duplicata_item(text) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION verificar_duplicata_local(text) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION normalizar_nome(text) FROM PUBLIC;
+-- Ninguém chama estas funções sem estar autenticado. O Supabase concede EXECUTE
+-- a "anon" diretamente (não por herança de PUBLIC) quando a função é criada, então
+-- revogar só de PUBLIC não bastaria — "anon" continuaria com acesso direto.
+-- Por isso revoga explicitamente de PUBLIC e de "anon", e concede só a "authenticated".
+-- A validação interna de tem_perfil()/eh_dono() continua sendo a defesa real; isto é a segunda camada.
+REVOKE EXECUTE ON FUNCTION eh_dono() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION tem_perfil() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION registrar_retirada(uuid, integer, text, uuid, text, boolean, boolean) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION registrar_devolucao(text, integer, text, text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION regularizar_retirada_pendente(text, text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION registrar_item(text, text, text, integer) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION registrar_local_uso(text, text, text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION verificar_duplicata_item(text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION verificar_duplicata_local(text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION normalizar_nome(text) FROM PUBLIC, anon;
 
 GRANT EXECUTE ON FUNCTION eh_dono() TO authenticated;
 GRANT EXECUTE ON FUNCTION tem_perfil() TO authenticated;

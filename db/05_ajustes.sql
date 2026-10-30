@@ -52,7 +52,9 @@ BEGIN
 END;
 $$;
 
-REVOKE EXECUTE ON FUNCTION solicitar_ajuste(uuid, integer, text, text) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION aprovar_ajuste(uuid) FROM PUBLIC;
+-- O Supabase concede EXECUTE a "anon" diretamente na criação da função (não por
+-- herança de PUBLIC), então revogar só de PUBLIC não bastaria (ver db/04_permissoes.sql).
+REVOKE EXECUTE ON FUNCTION solicitar_ajuste(uuid, integer, text, text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION aprovar_ajuste(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION solicitar_ajuste(uuid, integer, text, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION aprovar_ajuste(uuid) TO authenticated;

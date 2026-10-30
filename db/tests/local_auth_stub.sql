@@ -31,6 +31,16 @@ BEGIN
   END IF;
 END $$;
 
+-- Papel "anon" só para o REVOKE EXECUTE ... FROM PUBLIC, anon (04_permissoes.sql,
+-- 05_ajustes.sql) encontrar o papel real do Supabase e não falhar localmente;
+-- não recebe nenhum GRANT, pois não deve ter acesso a nada sensível.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+    CREATE ROLE anon NOSUPERUSER NOBYPASSRLS;
+  END IF;
+END $$;
+
 GRANT USAGE ON SCHEMA public TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated;
