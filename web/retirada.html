@@ -4,20 +4,53 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Retirada — Controle de Estoque</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/app.css">
+<link rel="icon" href="img/logo.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 </head>
 <body>
-<header class="topo">
-  <h1>Controle de Estoque</h1>
-  <nav class="menu">
-    <a href="index.html">Painel</a>
-    <a href="retirada.html" class="ativo">Retirada</a>
-    <a href="devolucao.html">Devolução</a>
-    <a href="itens.html">Itens e locais</a>
-    <a href="#" id="link-sair">Sair</a>
-  </nav>
-</header>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <img src="img/logo.png" alt="World Informática">
+      <span>World Estoque</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        Painel
+      </a>
+      <a href="retirada.html" class="nav-item ativo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+        Retirada
+      </a>
+      <a href="devolucao.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 7 7 17"/><path d="M17 17H7V7"/></svg>
+        Devolução
+      </a>
+      <a href="itens.html" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>
+        Itens e locais
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="#" id="link-sair" class="nav-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Sair
+      </a>
+    </div>
+  </aside>
+  <div class="overlay" id="overlay"></div>
+  <div class="app-main">
+    <header class="topbar">
+      <button id="btn-menu" class="btn-menu" aria-label="Abrir menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></svg>
+      </button>
+      <h1>Retirada</h1>
+    </header>
 
 <main class="conteudo">
   <h2 class="titulo-secao">Registrar retirada</h2>
@@ -69,6 +102,9 @@
   <p id="resultado" class="destaque-numero" hidden></p>
   <p id="mensagem" class="mensagem" hidden></p>
 </main>
+  </div>
+</div>
+<script src="js/layout.js"></script>
 
 <script type="module">
 import { chamar as chamarReal, listarItens as listarItensReal, listarLocais as listarLocaisReal, listarUnidades as listarUnidadesReal, cliente } from './js/supabase.js';

@@ -1,83 +1,232 @@
-/* Estilo do controle de estoque (Task 8). Sem frameworks; celular primeiro. */
+/* Design visual da WorldXambioá aplicado ao controle de estoque.
+   Só camada visual: cores, tipografia, espaçamento, componentes, navegação e
+   responsividade. Nenhuma regra de negócio, ID ou classe usada pelo JavaScript
+   foi alterada — só a aparência ao redor delas. */
 
 :root {
-  --cor-texto: #1a1a1a;
-  --cor-fundo: #f7f7f5;
-  --cor-cartao: #ffffff;
-  --cor-borda: #ddd;
-  --cor-alerta-fundo: #fdecea;
-  --cor-alerta-borda: #d93025;
-  --cor-link: #0b5fff;
+  --cor-primary: #29166f;
+  --cor-turquoise: #3bb3c3;
+  --cor-deep-navy: #171343;
+
+  --cor-background: #f8f9fa;
+  --cor-surface: #ffffff;
+  --cor-soft-purple: #f4f2fb;
+  --cor-soft-turquoise: #eaf8fa;
+  --cor-texto: #111827;
+  --cor-texto-secundario: #6b7280;
+  --cor-borda: #e5e7eb;
+
+  --cor-sucesso: #16a34a;
+  --cor-sucesso-fundo: #dcfce7;
+  --cor-erro: #dc2626;
+  --cor-erro-fundo: #fee2e2;
+  --cor-aviso: #d97706;
+  --cor-aviso-fundo: #fef3e2;
+
+  --raio: 12px;
+  --raio-grande: 16px;
+  --sombra: 0 1px 2px rgba(17, 24, 39, 0.04), 0 2px 8px rgba(17, 24, 39, 0.06);
+
+  --largura-sidebar: 232px;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--cor-texto);
-  background: var(--cor-fundo);
+  background: var(--cor-background);
+  -webkit-font-smoothing: antialiased;
 }
 
-.topo {
-  background: var(--cor-cartao);
-  border-bottom: 1px solid var(--cor-borda);
-  padding: 12px 16px;
-}
+h1, h2, h3, h4 { font-family: inherit; margin: 0; }
 
-.topo h1 {
-  font-size: 1.1rem;
-  margin: 0 0 8px;
-}
+/* ---------- Estrutura: sidebar + conteúdo ---------- */
 
-.menu {
+.app-shell {
   display: flex;
-  gap: 12px;
-  overflow-x: auto;
+  min-height: 100vh;
 }
 
-.menu a {
-  color: var(--cor-texto);
+.sidebar {
+  width: var(--largura-sidebar);
+  flex-shrink: 0;
+  background: var(--cor-deep-navy);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 18px;
+}
+
+.sidebar-logo img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.sidebar-logo span {
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  flex: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.72);
   text-decoration: none;
-  padding: 6px 2px;
-  white-space: nowrap;
-  border-bottom: 2px solid transparent;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 500;
 }
 
-.menu a.ativo {
-  border-bottom-color: var(--cor-link);
-  color: var(--cor-link);
-  font-weight: 600;
+.nav-item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.nav-item.ativo {
+  background: var(--cor-turquoise);
+  color: #fff;
+}
+
+.sidebar-footer {
+  padding: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.app-main {
+  flex: 1;
+  margin-left: var(--largura-sidebar);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  background: var(--cor-surface);
+  border-bottom: 1px solid var(--cor-borda);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.topbar h1 {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.btn-menu {
+  display: none;
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  color: var(--cor-texto);
+}
+
+.btn-menu svg { width: 22px; height: 22px; }
+
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 19, 67, 0.4);
+  z-index: 30;
 }
 
 .conteudo {
-  max-width: 480px;
+  width: 100%;
+  max-width: 720px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 24px;
 }
 
-@media (min-width: 700px) {
-  .conteudo {
-    max-width: 960px;
+@media (min-width: 900px) {
+  .conteudo { max-width: 960px; padding: 32px; }
+}
+
+@media (max-width: 860px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+  .sidebar.aberta {
+    transform: translateX(0);
+  }
+  .app-main {
+    margin-left: 0;
+  }
+  .btn-menu {
+    display: inline-flex;
+  }
+  .overlay.visivel {
+    display: block;
   }
 }
 
+/* ---------- Busca ---------- */
+
 .busca {
   width: 100%;
-  padding: 10px 12px;
-  font-size: 1rem;
+  padding: 11px 14px;
+  font-size: 0.95rem;
+  font-family: inherit;
   border: 1px solid var(--cor-borda);
-  border-radius: 8px;
+  border-radius: var(--raio);
+  background: var(--cor-surface);
   margin-bottom: 20px;
 }
 
+.busca:focus {
+  outline: none;
+  border-color: var(--cor-turquoise);
+  box-shadow: 0 0 0 3px var(--cor-soft-turquoise);
+}
+
+/* ---------- Seções e linhas (painel) ---------- */
+
 .titulo-secao {
-  font-size: 1rem;
-  margin: 20px 0 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--cor-texto);
+  margin: 24px 0 10px;
 }
 
 .titulo-secao.alerta {
-  color: var(--cor-alerta-borda);
+  color: var(--cor-aviso);
 }
 
 .lista {
@@ -87,111 +236,140 @@ body {
 }
 
 .linha {
-  background: var(--cor-cartao);
+  background: var(--cor-surface);
   border: 1px solid var(--cor-borda);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border-radius: var(--raio);
+  padding: 12px 14px;
+  box-shadow: var(--sombra);
 }
 
 .linha-alerta {
-  background: var(--cor-alerta-fundo);
-  border-color: var(--cor-alerta-borda);
+  background: var(--cor-aviso-fundo);
+  border-color: #f3cf9c;
 }
 
 .linha-nome {
   font-weight: 600;
   margin-bottom: 4px;
+  color: var(--cor-texto);
 }
 
 .codigo {
   font-weight: 400;
-  color: #666;
-  font-size: 0.85em;
+  color: var(--cor-texto-secundario);
+  font-size: 0.82em;
 }
 
 .linha-saldos {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   flex-wrap: wrap;
-  font-size: 0.9rem;
-  color: #444;
+  font-size: 0.86rem;
+  color: var(--cor-texto-secundario);
 }
 
 .vazio {
-  color: #777;
+  color: var(--cor-texto-secundario);
   font-size: 0.9rem;
 }
 
 .mensagem {
-  background: var(--cor-alerta-fundo);
-  border: 1px solid var(--cor-alerta-borda);
-  border-radius: 8px;
-  padding: 10px 12px;
+  background: var(--cor-erro-fundo);
+  border: 1px solid #f3b4b4;
+  color: var(--cor-erro);
+  border-radius: var(--raio);
+  padding: 12px 14px;
   margin-top: 12px;
+  font-size: 0.9rem;
 }
 
-/* Formulários de retirada, devolução e cadastro (Task 9 em diante). */
+/* ---------- Formulários ---------- */
+
 .formulario {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
+  background: var(--cor-surface);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-grande);
+  padding: 20px;
+  box-shadow: var(--sombra);
 }
 
 .campo {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .campo label {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
+  color: var(--cor-texto);
 }
 
 .campo input,
 .campo select {
-  padding: 10px 12px;
-  font-size: 1rem;
+  padding: 11px 12px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--cor-texto);
   border: 1px solid var(--cor-borda);
-  border-radius: 8px;
+  border-radius: var(--raio);
+  background: var(--cor-surface);
+}
+
+.campo input:focus,
+.campo select:focus {
+  outline: none;
+  border-color: var(--cor-turquoise);
+  box-shadow: 0 0 0 3px var(--cor-soft-turquoise);
 }
 
 .botao {
   padding: 12px;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  font-family: inherit;
   font-weight: 600;
   color: #fff;
-  background: var(--cor-link);
+  background: var(--cor-primary);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--raio);
   cursor: pointer;
+  transition: filter 0.15s ease;
 }
 
+.botao:hover { filter: brightness(1.08); }
+
 .botao.secundario {
-  background: #fff;
+  background: var(--cor-surface);
   color: var(--cor-texto);
   border: 1px solid var(--cor-borda);
 }
 
+.botao.secundario:hover { filter: none; background: var(--cor-background); }
+
 .destaque-numero {
-  background: #e6f4ea;
-  border: 1px solid #1e7e34;
-  color: #1e7e34;
-  border-radius: 8px;
-  padding: 14px;
-  font-size: 1.2rem;
+  background: var(--cor-sucesso-fundo);
+  border: 1px solid #a7e3b9;
+  color: var(--cor-sucesso);
+  border-radius: var(--raio);
+  padding: 16px;
+  font-size: 1.15rem;
   font-weight: 700;
   text-align: center;
 }
 
 .dialogo-confirmacao {
-  background: var(--cor-cartao);
-  border: 1px solid var(--cor-alerta-borda);
-  border-radius: 8px;
-  padding: 14px;
+  background: var(--cor-surface);
+  border: 1px solid var(--cor-borda);
+  border-left: 3px solid var(--cor-aviso);
+  border-radius: var(--raio);
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  box-shadow: var(--sombra);
 }
 
 .dialogo-confirmacao .acoes {
@@ -202,15 +380,79 @@ body {
 .resultado-busca {
   width: 100%;
   text-align: left;
-  background: var(--cor-cartao);
+  background: var(--cor-surface);
   border: 1px solid var(--cor-borda);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border-radius: var(--raio);
+  padding: 12px 14px;
   cursor: pointer;
   font: inherit;
+  color: var(--cor-texto);
+}
+
+.resultado-busca:hover {
+  border-color: var(--cor-turquoise);
 }
 
 .resultado-busca.selecionado {
-  border-color: var(--cor-link);
-  background: #eef4ff;
+  border-color: var(--cor-turquoise);
+  background: var(--cor-soft-turquoise);
+}
+
+/* ---------- Login ---------- */
+
+.pagina-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cor-deep-navy);
+  background-image: radial-gradient(circle at 20% 20%, rgba(59, 179, 195, 0.18), transparent 45%);
+  padding: 16px;
+}
+
+.cartao-login {
+  width: 100%;
+  max-width: 380px;
+  background: var(--cor-surface);
+  border-radius: var(--raio-grande);
+  box-shadow: 0 20px 50px rgba(17, 19, 67, 0.35);
+  padding: 32px;
+}
+
+.cartao-login .logo-login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.cartao-login .logo-login img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+
+.cartao-login .logo-login strong {
+  font-size: 1.05rem;
+  color: var(--cor-primary);
+}
+
+.cartao-login .logo-login span {
+  font-size: 0.82rem;
+  color: var(--cor-texto-secundario);
+}
+
+.rodape-login {
+  text-align: center;
+  margin-top: 16px;
+}
+
+/* O cartão de login já é o "card"; o formulário dentro dele fica sem
+   borda/sombra própria, para não parecer um card dentro de outro. */
+.cartao-login .formulario {
+  border: none;
+  padding: 0;
+  box-shadow: none;
+  gap: 14px;
 }

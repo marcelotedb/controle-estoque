@@ -4,28 +4,35 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Entrar — Controle de Estoque</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/app.css">
+<link rel="icon" href="img/logo.png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 </head>
 <body>
-<header class="topo">
-  <h1>Controle de Estoque</h1>
-</header>
-
-<main class="conteudo">
-  <form id="form-login" class="formulario">
-    <div class="campo">
-      <label for="email">E-mail</label>
-      <input id="email" type="email" required autocomplete="username">
+<main class="pagina-login">
+  <div class="cartao-login">
+    <div class="logo-login">
+      <img src="img/logo.png" alt="World Informática">
+      <strong>World Estoque</strong>
+      <span>Controle de estoque — WorldXambioá</span>
     </div>
-    <div class="campo">
-      <label for="senha">Senha</label>
-      <input id="senha" type="password" required autocomplete="current-password">
-    </div>
-    <button type="submit" class="botao">Entrar</button>
-  </form>
-  <p id="mensagem" class="mensagem" hidden></p>
-  <p class="vazio">Sem conta ainda? Peça ao dono para criar uma para você.</p>
+    <form id="form-login" class="formulario">
+      <div class="campo">
+        <label for="email">E-mail</label>
+        <input id="email" type="email" required autocomplete="username">
+      </div>
+      <div class="campo">
+        <label for="senha">Senha</label>
+        <input id="senha" type="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="botao">Entrar</button>
+    </form>
+    <p id="mensagem" class="mensagem" hidden></p>
+    <p class="vazio rodape-login">Sem conta ainda? Peça ao dono para criar uma para você.</p>
+  </div>
 </main>
 
 <script type="module">
